@@ -73,6 +73,8 @@ const initBuffers = gl =>{
 }
 
 const drawScene = (gl, programInfo, buffers)=>{
+
+    /* render */
     gl.clearColor(0, 0, 0, 1);
     gl.clearDepth(1);
     gl.enable(gl.DEPTH_TEST);
@@ -80,7 +82,9 @@ const drawScene = (gl, programInfo, buffers)=>{
 
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-    const fieldOfview = 45 * Math.PI / 180;
+    /*Camera */
+
+    const fieldOfView = 45 * Math.PI / 180;
     const aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
     const zNear = 0.1;
     const zFar = 100;
@@ -88,11 +92,62 @@ const drawScene = (gl, programInfo, buffers)=>{
     const projectionMatrix = mat4.create();
 
     mat4.perspective(
-        projectionMatrix, fieldOfview, aspect, zNear, zFar
+        projectionMatrix,
+        fieldOfView,
+        aspect,
+        zNear,
+        zFar
     );
+
+    const modelViewMatrix = mat4.create();
+
+    mat4.translate(
+        modelViewMatrix,
+        modelViewMatrix,
+        [0, 0, -6]
+    );
+
+    {
+        /*make quad*/
+
+        const numComponents = 2;
+        const type = gl.FLOAT;
+        const normalize = false;
+        const stride = 0;
+        const offset = 0;
+        
+        gl.bindBuffer(gl.ARRAY_BUFFER, buffers.position);
+        gl.vertexAttribPointer(
+            programInfo.attribLocations.vertexPosition,
+            numComponents,
+            type,
+            normalize,
+            stride,
+            offset
+        );
+        gl.enableVertexAttribArray(programInfo.attribLocations.vertexPosition);
+    }
+
+    gl.useProgram(programInfo.program);
+
+    gl.uniformMatrix4fv(
+        programInfo.uniformLocations.projectionMatrix,
+        false,
+        projectionMatrix
+    );
+
+    gl.uniformMatrix4fv(
+        programInfo.uniformLocations.modelViewMatrix,
+        false,
+        modelViewMatrix
+    );
+
+    {
+        const offset = 0;
+        const vertexCount = 4;
+        gl.drawArrays(gl.TRIANGLE_STRIP, offset, vertexCount);
+    }
 }
-
-
 
 const main = ()=>{
     const gl = canvas.getContext('webgl2');
@@ -111,7 +166,7 @@ const main = ()=>{
         },
         uniformLocations : {
             projectionMatrix : gl.getUniformLocation(shaderProgram, 'uProjectionMatrix'),
-            modelViewMAtrix : gl.getUniformLocation(shaderProgram, 'uModelViewMatrix')
+            modelViewMatrix : gl.getUniformLocation(shaderProgram, 'uModelViewMatrix')
         }
     };
 
